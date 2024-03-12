@@ -7,6 +7,11 @@ jobs:
   build-and-publish:
     name: Build and publish package to PyPI and TestPyPI
     runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/litepipe
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python 3.10
@@ -28,10 +33,14 @@ jobs:
           --outdir dist/
           .
       - name: Publish distribution package to Test PyPI
-        uses: pypa/gh-action-pypi-publish@master
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.PYPI_TEST_API_KEY }}
-          repository_url: https://test.pypi.org/legacy/
+          repository-url: https://test.pypi.org/legacy/
+#      - name: Publish distribution package to Test PyPI
+#        uses: pypa/gh-action-pypi-publish@master
+#        with:
+#          password: ${{ secrets.PYPI_TEST_API_KEY }}
+#          repository_url: https://test.pypi.org/legacy/
 #      - name: Publish distribution 📦 to PyPI
 #        uses: pypa/gh-action-pypi-publish@master
 #        with:
