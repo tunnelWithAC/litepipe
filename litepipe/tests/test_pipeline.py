@@ -26,6 +26,13 @@ class PipelineTest(unittest.TestCase):
     def test_valid_pipeline_with_valid_input__returns_expected_value(self):
         pipeline = Pipeline(self.add_transform)
 
-        result = pipeline.run(2)
+        pval = pipeline.run(2)
+
+        self.assertEqual(pval.result, 4)
+
+    def test_valid_pipeline_with_valid_input__return_pval_equals_false__returns_expected_value(self):
+        pipeline = Pipeline(self.add_transform)
+
+        result = pipeline.run(2, return_pval=False)
 
         self.assertEqual(result, 4)

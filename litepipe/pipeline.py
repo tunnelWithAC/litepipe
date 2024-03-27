@@ -1,6 +1,8 @@
 from typing import Callable, List
 
+from litepipe.pval import Pval
 from litepipe.transform import Transform
+
 
 class Pipeline:
     def __init__(self, transforms: Transform):
@@ -12,13 +14,16 @@ class Pipeline:
         """
         assert type(transforms) == Transform, '"transforms" is not type litepipe.Transform'
 
-        self.result_value = None
+        self.result = None
         self.steps: List[Callable] = transforms.steps
 
-    def run(self, input):
+    def run(self, input, return_pval=True):
         assert input is not None, 'input must not be None'
 
-        _input = self.result_value or input
+        result = self.result or input
         for step in self.steps:
-            _input = step(_input)
-        return _input
+            result = step(result)
+
+        if return_pval:
+            return Pval(result=result)
+        return result
