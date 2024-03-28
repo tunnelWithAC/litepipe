@@ -16,3 +16,7 @@ class Transform:
     def __rshift__(self, transform):
         self.steps.append(transform.fn)  # test
         return type(self)(self.fn, self.steps)  # test
+
+
+def t(x) -> Transform:
+    return Transform(x)
