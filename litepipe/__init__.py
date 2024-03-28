@@ -1,2 +1,2 @@
-from .transform import Transform
+from .transform import Transform, t
 from .pipeline import Pipeline
