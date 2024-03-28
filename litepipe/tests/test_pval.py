@@ -16,7 +16,7 @@ class PvalTest(unittest.TestCase):
         add_transform = Transform(lambda x: x + 2)
         result = Pipeline(add_transform).run(2)
 
-        pval = Pval(result=result) >> double
+        pval = result >> double
 
         self.assertEqual(8, pval)
 
