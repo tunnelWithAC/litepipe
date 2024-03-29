@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="litepipe",
-    version="1.0.0-alpha6",
+    version="1.1.0",
     author="Conall Daly",
     author_email="conalldalydev@gmail.com",
     description="Lightweight Python library for data pipelines",
