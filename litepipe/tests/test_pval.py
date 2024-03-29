@@ -18,7 +18,7 @@ class PvalTest(unittest.TestCase):
 
         pval = result >> double
 
-        self.assertEqual(8, pval)
+        self.assertEqual(8, pval.result)
 
     def test_right_shift_appends_multiple_transforms_to_result(self):
         result = Pipeline(double).run(2)
