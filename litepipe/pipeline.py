@@ -1,3 +1,4 @@
+import asyncio
 from typing import Callable, List
 
 from litepipe.pval import Pval
@@ -16,6 +17,7 @@ class Pipeline:
 
         self.result = None
         self.steps: List[Callable] = transforms.steps
+        # self.transforms: List[Transform] = transforms
 
     def run(self, input, return_pval=True):
         assert input is not None, 'input must not be None'
@@ -27,3 +29,14 @@ class Pipeline:
         if return_pval:
             return Pval(result=result)
         return result
+
+    async def iterate(self, elements):
+        tasks = []
+
+        async with asyncio.TaskGroup() as tg:
+            for element in elements:
+                t = tg.create_task(self.run(element))
+                tasks.append(t)
+
+        results = [t.result() for t in tasks]
+        return results

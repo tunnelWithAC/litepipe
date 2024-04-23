@@ -2,6 +2,7 @@ class Pval:
     def __init__(self, result):
         self.result = result
         self.steps = []
+        self.error = {}
 
     def __rshift__(self, transform):
         self.steps.append(transform.fn)
@@ -13,4 +14,5 @@ class Pval:
 
         for step in self.steps:
             _input = step(_input)
-        return _input
+        # return _input
+        return Pval(_input)
