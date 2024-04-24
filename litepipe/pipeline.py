@@ -17,13 +17,16 @@ class Pipeline:
         self.result = None
         self.steps: List[Callable] = transforms.steps
 
-    def run(self, input, return_pval=True):
+    def run(self, input):
         assert input is not None, 'input must not be None'
 
         result = self.result or input
-        for step in self.steps:
-            result = step(result)
+        pval = Pval(result)
 
-        if return_pval:
-            return Pval(result=result)
-        return result
+        for index, step in enumerate(self.steps):
+            pval.step = step
+            try:
+                pval.result = step(result)
+            except Exception as e:
+                pval.exception = str(e)
+        return pval
