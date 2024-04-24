@@ -3,6 +3,11 @@ from typing import Callable, List
 
 class Transform:
     def __init__(self, fn: Callable, steps: List[Callable] = None):
+        """
+
+        :param fn (Callable):
+        :param steps (List[Callable]):
+        """
         if steps is not None:
             self.steps = steps
         else:
