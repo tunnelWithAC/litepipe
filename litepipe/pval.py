@@ -1,18 +1,21 @@
 class Pval:
-    def __init__(self, result):
+    def __init__(self, runner, result, steps=[]):
+        """
+
+        :param runner: Dependency injection
+        :param result:
+        :param steps:
+        """
+        self.runner = runner
         self.result = result
-        self.steps = []
-        self.error = {}
+        self.steps = steps
+        self.exception = None
+        self.step = 0
+
+    @property
+    def has_error(self):
+        return self.exception is not None
 
     def __rshift__(self, transform):
-        self.steps.append(transform.fn)
-        result = self.run()
-        return Pval(result=result)
-
-    def run(self):
-        _input = self.result
-
-        for step in self.steps:
-            _input = step(_input)
-        # return _input
-        return Pval(_input)
+        pval = type(self)(self.runner, self.result, [transform.fn])
+        return self.runner.run(pval)

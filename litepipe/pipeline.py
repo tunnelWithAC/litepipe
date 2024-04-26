@@ -1,8 +1,7 @@
 import asyncio
 from typing import Callable, List
 
-from litepipe.pval import Pval
-from litepipe.transform import Transform
+from litepipe import Pval, Runner, Transform
 
 
 class Pipeline:
@@ -17,18 +16,14 @@ class Pipeline:
 
         self.result = None
         self.steps: List[Callable] = transforms.steps
-        # self.transforms: List[Transform] = transforms
+        self.runner = Runner()
 
-    def run(self, input, return_pval=True):
+    def run(self, input) -> Pval:
         assert input is not None, 'input must not be None'
 
         result = self.result or input
-        for step in self.steps:
-            result = step(result)
-
-        if return_pval:
-            return Pval(result=result)
-        return result
+        pval = Pval(self.runner, result, self.steps)
+        return self.runner.run(pval)
 
     async def iterate(self, elements):
         tasks = []
