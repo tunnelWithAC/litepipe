@@ -1,8 +1,12 @@
+from typing import Any
+
+from litepipe.runner import Runner
+
 class Pval:
-    def __init__(self, runner, result, steps=[]):
+    def __init__(self, runner: Runner, result: Any, steps=[]):
         """
 
-        :param runner: Dependency injection
+        :param runner:
         :param result:
         :param steps:
         """
