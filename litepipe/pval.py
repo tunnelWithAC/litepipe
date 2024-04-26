@@ -1,9 +1,11 @@
-from typing import Any
+from typing import Any, List
 
 from litepipe.runner import Runner
+from litepipe.transform import Transform
+
 
 class Pval:
-    def __init__(self, runner: Runner, result: Any, steps=[]):
+    def __init__(self, runner: Runner, result: Any, steps: List[Transform]=[]):
         """
 
         :param runner:
