@@ -21,10 +21,10 @@ class Pipeline:
         self.steps: List[Callable] = transforms.steps
         self.runner = Runner()
 
-    def run(self, input) -> Pval:
-        assert input is not None, 'input must not be None'
+    def run(self, pipeline_input) -> Pval:
+        assert pipeline_input is not None, 'input must not be None'
 
-        result = self.result or input
+        result = self.result or pipeline_input
         pval = Pval(self.runner, result, self.steps)
         return self.runner.run(pval)
 

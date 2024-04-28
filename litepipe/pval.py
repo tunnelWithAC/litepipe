@@ -5,7 +5,7 @@ from litepipe.transform import Transform
 
 
 class Pval:
-    def __init__(self, runner: Runner, result: Any, steps: List[Transform]=[]):
+    def __init__(self, runner: Runner, result: Any, steps=None):
         """
 
         :param runner:
@@ -14,7 +14,10 @@ class Pval:
         """
         self.runner = runner
         self.result = result
-        self.steps = steps
+        if steps is None:
+            self.steps: List[Transform] = []
+        else:
+            self.steps = steps
         self.exception = None
         self.step = 0
 

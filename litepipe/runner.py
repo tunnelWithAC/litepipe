@@ -1,5 +1,12 @@
+"""
+The Runner class is an abstraction of the logic called when a pipeline is run.
+This class is used by the Pipeline and Pval class via Dependency Injection and called in their run method.
+"""
+
+
 class Runner:
-    def run(self, pval):
+    @staticmethod
+    def run(pval):
         result = pval.result
 
         for index, step in enumerate(pval.steps):
@@ -10,5 +17,4 @@ class Runner:
                 pval.step = index
 
         pval.result = result
-        pval.steps = []
         return pval

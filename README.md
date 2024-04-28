@@ -62,6 +62,21 @@ hello_int = Transform(lambda x: f'Hello, {x}')
 
 pipeline = Pipeline(add_transform >> hello_int)
 
-result = pipeline.run(5)
-# output - 'Hello, 7'
+pval = pipeline.run(5)
+print(pval.result)
+# 'Hello, 7'
+```
+
+Pipelines return a [Pval](https://github.com/tunnelWithAC/litepipe/blob/master/litepipe/pval.py) object which can be
+chained directly to transforms to create new pipelines.
+
+```commandline
+add_transform = Transform(lambda x: x + 2)
+pipeline = Pipeline(add_transform >> add_transform)
+
+pval = pipeline.run(2)
+# pval.result - 6
+
+second_pval = pval >> add_transform
+# second_pval.result - 8
 ```
