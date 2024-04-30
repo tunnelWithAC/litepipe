@@ -1,7 +1,6 @@
 import unittest
 
-from litepipe.pipeline import Pipeline
-from litepipe.transform import Transform, t
+from litepipe import Pipeline, Transform, t
 
 
 def add_two(x):

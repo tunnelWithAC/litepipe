@@ -1,7 +1,9 @@
+import asyncio
 from typing import Callable, List
 
 from litepipe.pval import Pval
 from litepipe.transform import Transform
+from litepipe.runner import Runner
 
 
 class Pipeline:
@@ -12,21 +14,25 @@ class Pipeline:
         :param transforms (Transform): a Transform object that 'steps' property contains one or more function that
         will be executed when the 'run' method of this class is called.
         """
-        assert type(transforms) == Transform, '"transforms" is not type litepipe.Transform'
+        assert isinstance(transforms, Transform), '"transforms" is not type litepipe.Transform'
 
         self.result = None
         self.steps: List[Callable] = transforms.steps
 
-    def run(self, input):
-        assert input is not None, 'input must not be None'
+    def run(self, pipeline_input) -> Pval:
+        assert pipeline_input is not None, 'input must not be None'
 
-        result = self.result or input
+        result = self.result or pipeline_input
         pval = Pval(result)
+        return Runner.run(pval, self.steps)
 
-        for index, step in enumerate(self.steps):
-            pval.step = step
-            try:
-                pval.result = step(result)
-            except Exception as e:
-                pval.exception = str(e)
-        return pval
+    async def iterate(self, elements):
+        tasks = []
+
+        async with asyncio.TaskGroup() as tg:
+            for element in elements:
+                t = tg.create_task(self.run(element))
+                tasks.append(t)
+
+        results = [t.result() for t in tasks]
+        return results

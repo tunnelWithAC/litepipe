@@ -1,6 +1,6 @@
 import unittest
 
-from litepipe.transform import Transform, t
+from litepipe import Transform, t
 
 
 class TransformTest(unittest.TestCase):
@@ -19,11 +19,9 @@ class TransformTest(unittest.TestCase):
         @t
         def add_transform(x):
             return x + 2
-
         @t
         def subtract_transform(x):
             return x -2
-
         expected_step_count = 2
 
         add_transform >> subtract_transform
