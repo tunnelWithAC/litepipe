@@ -1,23 +1,15 @@
-from typing import Any, List
+from typing import Any
 
 from litepipe.runner import Runner
-from litepipe.transform import Transform
 
 
 class Pval:
-    def __init__(self, runner: Runner, result: Any, steps=None):
+    def __init__(self, result: Any):
         """
-
-        :param runner:
-        :param result:
-        :param steps:
+        :param result: The result of a pipeline execution. Instances of this class should primarily be created
+        by running the Pipeline classes run method or as the result of chaining a transform to an existing Pval object.
         """
-        self.runner = runner
         self.result = result
-        if steps is None:
-            self.steps: List[Transform] = []
-        else:
-            self.steps = steps
         self.exception = None
         self.step = 0
 
@@ -26,5 +18,5 @@ class Pval:
         return self.exception is not None
 
     def __rshift__(self, transform):
-        pval = type(self)(self.runner, self.result, [transform.fn])
-        return self.runner.run(pval)
+        pval = type(self)(self.result)
+        return Runner.run(pval, [transform.fn])
