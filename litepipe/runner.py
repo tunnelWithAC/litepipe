@@ -11,10 +11,18 @@ class Runner:
         assert isinstance(pval, Pval), '"pval" is not type litepipe.Pval'
 
         new_pval = Pval(pval.result)
+        """
+        Notes from me to me
+        - See if I can create an abstract for transform where __call__ must be implemented
+        - Calling this function for transform will return a value / exception
+        - Calling it for a filter will return 
+         
+        """
         for index, step in enumerate(steps):
-            try:
-                new_pval.result = step(pval.result)
-            except Exception as e:
-                new_pval.exception = str(e)
-                new_pval.step = index
+            if pval.result is not None:
+                try:
+                    new_pval.result = step(pval.result)
+                except Exception as e:
+                    new_pval.exception = str(e)
+                    new_pval.step = index
         return new_pval

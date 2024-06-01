@@ -17,7 +17,28 @@ class Transform:
 
     def __rshift__(self, transform):
         self.steps.append(transform.fn)
-        return type(self)(self.fn, self.steps)
+        # return type(self)(self.fn, self.steps)
+        return transform
+
+
+class Filter:
+    def __init__(self, fn: Callable, steps: List[Callable] = None):
+        """
+        :param fn (Callable): A Python function that should be called when the transform is executed as part of a
+            pipeline.
+        :param steps (List[Callable]): A list of Python functions that are chained together whenever Transforms are
+            chained using the rshift (>>) operator.
+        """
+        if steps is not None:
+            self.steps = steps
+        else:
+            self.steps = [fn]
+        self.fn = fn
+
+    def __rshift__(self, transform):
+        # self.steps[:-1].steps.append(transform.fn)
+        self.steps.append(transform.fn)
+        # return type(self)(self.fn, self.steps)
 
 
 def t(x) -> Transform:
