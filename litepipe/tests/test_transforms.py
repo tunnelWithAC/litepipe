@@ -8,7 +8,7 @@ class TransformTest(unittest.TestCase):
     def test_right_shift_appends_function_without_errors(self):
         add_transform = Transform(lambda x: x + 2)
         mock_side_effect = Transform(lambda x: x)
-        expected_step_count = 2
+        expected_step_count = 1
 
         add_transform >> mock_side_effect
 
@@ -22,7 +22,7 @@ class TransformTest(unittest.TestCase):
         @t
         def subtract_transform(x):
             return x -2
-        expected_step_count = 2
+        expected_step_count = 1
 
         add_transform >> subtract_transform
 

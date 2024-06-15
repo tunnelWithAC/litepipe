@@ -1,10 +1,12 @@
 import unittest
 
-from litepipe import Pipeline, Transform, t
+from litepipe import Pipeline, Transform, t, Pval
+from litepipe.util.testing import assert_equal
 
 
 def add_two(x):
-    return x + 2
+    new_result = x + 2
+    return new_result
 
 
 class PipelineTest(unittest.TestCase):
@@ -17,23 +19,29 @@ class PipelineTest(unittest.TestCase):
             Pipeline(None)
 
     def test_valid_pipeline_with_no_input__raises_value_error(self):
-        pipeline = Pipeline(self.add_transform)
 
         with self.assertRaisesRegex(AssertionError, 'input must not be None'):
+            pipeline = Pipeline(self.add_transform)
+
             pipeline.run(None)
 
     def test_valid_pipeline_with_valid_input__returns_expected_value(self):
         pipeline = Pipeline(self.add_transform)
 
-        pval = pipeline.run(2)
+        pvals = pipeline.run(2, collect=True)
 
-        self.assertEqual(pval.result, 4)
+        # self.assertEqual(pval.result, 4)
+        assert_equal(pvals, [Pval(4)])
 
     def test_pipeline_with_error_steps__returns_pval_with_error_details(self):
         @t
         def err_transform(_):
             raise ValueError("this isn't valid")
 
-        pval = Pipeline(self.add_transform >> err_transform).run(0)
+        pvals = Pipeline(self.add_transform >> err_transform).run(0, collect=True)
 
-        self.assertEqual(pval.exception, "this isn't valid")
+        expected_pval = Pval(None)
+        expected_pval.exception = "this isn't valid"
+        # self.assertEqual(pval.exception, "this isn't valid")
+        # self.assertEqual(pvals, [expected_pval])
+        assert_equal(pvals, [expected_pval])

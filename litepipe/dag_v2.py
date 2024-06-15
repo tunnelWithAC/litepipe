@@ -1,14 +1,7 @@
 # source: https://object-oriented-python.github.io/9_trees_and_directed_acyclic_graphs.html
 from abc import ABC, abstractmethod
 
-plus_one = lambda x: x + 1
-
-
-def print_output(label, value):
-    print(f"{label}: {value}")
-
-
-# class Transform(ABC):
+import types
 
 
 class TreeNode:
@@ -29,6 +22,8 @@ class TreeNode:
         self.children = list(children)
 
     def fn(self, input):
+        plus_one = lambda x: x + 1
+
         yield plus_one(input)
 
     def default_label(self):
@@ -48,40 +43,65 @@ class TreeNode:
         self.children = self.children + [tree_node]
         return tree_node
 
-        # self.steps.append(transform.fn)
-
 
 class Output(TreeNode):
     def fn(self, input):
         print(f"{self.label}: {input}")
 
-class Filter(TreeNode):
+
+class Return(TreeNode):
     def fn(self, input):
         # print(f"{self.label}: {input}")
-        if True:
+        return input
+
+
+class Duplicate(TreeNode):
+    def fn(self, input):
+        yield input
+        yield input
+
+
+class Filter(TreeNode):
+    def fn(self, input):
+        if input > 10:
             yield input
 
 
-def previsitor(tree, val, fn_parent=None):
+def previsitor(tree, val):
     """Traverse tree in preorder applying a function to every node.
 
     Parameters
     ----------
     tree: TreeNode
         The tree to be visited.
-    fn: function(node, fn_parent)
-        A function to be applied at each node. The function should take
-        the node to be visited as its first argument, and the result of
-        visiting its parent as the second.
     """
     fn_out = tree.fn(val)
-    if fn_out:
-        fn_output = next(fn_out, None)
-        if fn_output is not None:
+    if isinstance(fn_out, types.GeneratorType):
+        if fn_output := next(fn_out, None) is not None:
             for child in tree.children:
                 previsitor(child, fn_output)
 
-    # print(fn_out)
+
+class Pipeline:
+    def __init__(self, start):
+        self.start = start
+
+    def run(self, input):
+        self._previsitor(self.start, input)
+
+    def _previsitor(self, tree, val):
+        """Traverse tree in preorder applying a function to every node.
+
+        Parameters
+        ----------
+        tree: TreeNode
+            The tree to be visited.
+        """
+        fn_out = tree.fn(val)
+        if isinstance(fn_out, types.GeneratorType):
+            for fn_output in fn_out:
+                for child in tree.children:
+                    self._previsitor(child, fn_output)
 
 
 
@@ -107,15 +127,17 @@ def fn(node, p):
 
 
 a = TreeNode(label="a")
-b = TreeNode(label="b")
-c = TreeNode(label="c")
+c = Duplicate(label="c")
 d = TreeNode(label="d")
-
 e = TreeNode(label="e")
 f = TreeNode(label="f")
+# b = TreeNode(d, e, f, label="b",)
 g = TreeNode(label="g")
 h = Filter(label="h")
 i = Output(label="i")
+
+b = Return(label="b")
+
 
 # 1.
 """
@@ -144,11 +166,12 @@ h >> i
 
 # b >> e
 # b >> f
-a >> b
-b >> d
-b >> e
-b >> f
-a >> c >> g >> h >> i
+# a >> b >> c >> i  # >> h
+
+
+a >> c >> i  # >> h
+
+# a >> c >> g >> h >> i
 # b >> d
 # a >> c >> g
 
@@ -158,9 +181,48 @@ a >> c >> g >> h >> i
 #     TreeNode("c", g)
 # )
 
-print(a)
+# print(a)
 
-previsitor(a, 2)
+# previsitor(a, 20)
+
+pipe = Pipeline(a)
+pipe.run(20)
+
+
+def y(x):
+    yield x
+
+def x(y):
+    return y
+
+_first = y(2)
+_second = x(_first)
+
+def _return(gen_obj):
+    return next(gen_obj, None)
+
+# for x in _second:
+#     print(x)
+
+# result = _return(_second)
+# print(result)
+
+# class Pipeline():
+#     def __init__(self, *tree):
+#         self.tree = tree
+#
+#     def run(self, val):
+#         branch = self.tree[0]
+#         fn_out = branch.fn(val)
+#         if fn_out:
+#             fn_output = next(fn_out, None)
+#             if fn_output is not None:
+#                 for child in branch.children:
+#                     self.run(child, fn_output)
+
+
+# pipeline = Pipeline(a)
+# pipeline.run(2)
 
 # a -> (b -> (d -> (), e -> (), f -> ()), c -> (g -> ()))
 # a -> (b -> (d -> (), e -> (), f -> ()), c -> (g -> ()))

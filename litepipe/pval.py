@@ -1,6 +1,6 @@
 from typing import Any
 
-from litepipe.runner import Runner
+# from litepipe.runner import Runner
 
 
 class Pval:
@@ -16,7 +16,7 @@ class Pval:
     @property
     def has_error(self):
         return self.exception is not None
-
-    def __rshift__(self, transform):
-        pval = type(self)(self.result)
-        return Runner.run(pval, [transform.fn])
+    #
+    # def __rshift__(self, transform):
+    #     pval = type(self)(self.result)
+    #     return Runner.run(pval, [transform.fn])
