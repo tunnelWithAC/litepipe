@@ -6,7 +6,7 @@ from pipeline import Pipeline
 
 class NoChange(Transform):
     def expand(self, input):
-        yield input
+        return input
 
 
 class Double(Transform):
@@ -65,7 +65,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual([4, 4], results)
 
 
-    def test_group_by(self):
+    def test_group_by_0(self):
         start = NoChange()
         start >> GroupBy()
         pipe = Pipeline(start)
@@ -75,14 +75,27 @@ class MyTestCase(unittest.TestCase):
         expected = [{'s': ['strawberry'], 'b': ['banana', 'blueberry']}]
 
         self.assertEqual(results, expected)
-    # def test_multiple_children_on_separate_branches(self):
-    #     root  = NoChange()
-    #     steps = YieldMultipleOutputs() >> Double()
-    #     pipe = Pipeline(steps)
-    #
-    #     results = pipe.run([1])
-    #
-    #     self.assertEqual([2], results)
+
+
+    def test_group_by_1(self):
+        pipe = Pipeline(GroupBy())
+
+        results = pipe.run(["strawberry", "banana", "blueberry"])
+
+        expected = [{'s': ['strawberry'], 'b': ['banana', 'blueberry']}]
+
+        self.assertEqual(results, expected)
+
+    def test_group_by_into_transform(self):
+        start = NoChange()
+        start >> GroupBy()
+        pipe = Pipeline(start)
+
+        results = pipe.run(["strawberry", "banana", "blueberry"])
+
+        expected = [{'s': ['strawberry'], 'b': ['banana', 'blueberry']}]
+
+        self.assertEqual(results, expected)
 
 
 if __name__ == '__main__':

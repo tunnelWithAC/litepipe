@@ -21,6 +21,14 @@ class Transform:
         # return type(self)(self.fn, self.steps)
         return transform
 
+    def __call__(self, input):
+        for _inp in input:
+            transform_output = self.fn(_inp)
+            if len(self.steps) > 0:
+                for child in self.steps:
+                    yield from child(iter((transform_output,)))
+            else:
+                yield transform_output
 
 # class Filter:
 #     def __init__(self, fn: Callable, steps: List[Callable] = None):

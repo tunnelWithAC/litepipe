@@ -1,18 +1,13 @@
-import logging
-import time
-
-
 class Transform:
     def __init__(self):
-        # self.expand = expand
         self.children = []
 
     def __rshift__(self, other):
         self.children.append(other)
-        # potential recursion issue
         return other
 
     def __call__(self, input):
+        # this may need to be revised in order to use groupby
         for _inp in input:
             transform_output = self.expand(_inp)
             if self.is_iterator(transform_output):
@@ -36,20 +31,59 @@ class Transform:
         else:
             yield transform_output
 
-      # def expand(self, input_or_inputs: InputT) -> OutputT:
-      #   raise NotImplementedError
-
     def expand(self, input_or_inputs):
         raise NotImplementedError
 
+    # def __iterate_children(self, transform_output, children):
+    #     pass
 
+
+class GroupBy(Transform):
+    # def __init__(self, get_key_fn):
+    #     self.get_key_fn = get_key_fn
+    def __init__(self):
+        # super.__init__()
+        super().__init__()
+
+    def __iterate_children(self):
+        parent = super()
+        return parent.__iterate_children()
+
+    def __call__(self, input):
+        """
+        input: (x, 4), (y, 14), (z, 3), (x, 4),
+        expected output: (x, 7), (y, 14), (z, 3)
+        function: sum_iterables
+        """
+        from itertools import groupby
+
+        groups = {}
+        for key, group in groupby(input, self.get_key()):
+            if key not in groups.keys():
+                groups[key] = []
+            for g in group:
+                groups[key].append(g)
+
+        for ele in groups.items():
+            yield from self.__iterate_children()
+            # pa  = super
+
+    def get_key(self):
+        # if self.get_key_fn is not None:
+        #     return self.get_key_fn
+        return lambda x: x[0]
+
+
+class Temp(Transform):
+    def __init__(self):
+        s = super()
+        super().__init__()
+
+
+t = Temp()
 class Pipeline:
     def __init__(self, steps):
         self.steps = steps
-
-    # def iterate(self, input):
-    #     for element in self.steps(input):
-    #         logging.info(f'Processing element: {element}')
 
     def run(self, input):
         """
@@ -59,25 +93,10 @@ class Pipeline:
             print(f'Processing element: {element}')
 
 
-
 def create_file(n, step='output'):
     from datetime import datetime
     now = datetime.now().timestamp()
     print(f'{step}{n}_{int(now)}.txt')
-
-
-class Double(Transform):
-    # def __init__(self):
-    #     super.__init__(self.expand)
-    # @property
-    def expand(self, n):
-        return n * n * n
-
-
-def second_transform(n):
-    yield n * n * n
-
-# sec = Transform(second_transform)
 
 
 class Cube(Transform):
@@ -85,33 +104,28 @@ class Cube(Transform):
         yield n * n * n
 
 
-# def double(n):
-#     create_file(n, 'double')
-#     yield n * 2 * 2
-#     yield n
-
-# d = Transform(double)
-
 class Double(Transform):
     def expand(self, n):
-        create_file(n, 'double')
         yield n * 2 * 2
+        # yield ('1', n)
         yield n
 
-def write_to_file(n):
-    create_file(n)
-    yield n
+# https://realpython.com/python-filter-function/
+class Filter(Transform):
+    def expand(self, n):
+        if n > 10:
+            yield n
 
-
-# c = Transform(write_to_file)
 
 class WriteToFile(Transform):
     def expand(self, input_or_inputs):
-        create_file(input_or_inputs)
+        # create_file(input_or_inputs)
         yield input_or_inputs
 
+
 c = Cube()
-c >> Double() >> WriteToFile()
+g = GroupBy()
+c >> Double() >> Filter() >> WriteToFile()
 
 pipe = Pipeline(c)
 
@@ -143,3 +157,15 @@ Processing element: 32
 output8_1718138930.txt
 Processing element: 8
 """
+
+
+class T:
+    def print(self):
+        print("T")
+
+class G(T):
+    def print(self):
+        super().print()
+
+_g  = G()
+_g.print()

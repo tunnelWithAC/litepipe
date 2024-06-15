@@ -26,7 +26,8 @@ class PipelineTest(unittest.TestCase):
             pipeline.run(None)
 
     def test_valid_pipeline_with_valid_input__returns_expected_value(self):
-        pipeline = Pipeline(self.add_transform)
+        x  = self.add_transform >> self.add_transform
+        pipeline = Pipeline(x)
 
         pvals = pipeline.run(2, collect=True)
 

@@ -1,3 +1,6 @@
+from collections.abc import Iterable
+
+
 class Transform:
     def __init__(self):
         self.children = []
@@ -24,9 +27,14 @@ class Transform:
         transform_outputs = map(self.expand, input)
 
         if len(groupbys) > 0:
-            collected = [next(t) for t in transform_outputs]
+            collected = []
+            for output in transform_outputs:
+                # use try/except as quick hack for checking if output is iterable
+                try:
+                    collected.append(next(output))
+                except:
+                    collected.append(output)
             for g in groupbys:
-                # t = list(transform_outputs)
                 yield from g(collected)
 
         for transform_output in transform_outputs:
