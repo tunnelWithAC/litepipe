@@ -25,23 +25,44 @@ class Transform:
 
         transform_outputs = map(self.expand, input)
 
-        if len(groupbys) > 0:
-            collected_values = []
-            for output in transform_outputs:
-                # use try/except as quick hack for checking if output is iterable
-                try:
-                    collected_values.append(next(output))
-                except:
-                    collected_values.append(output)
-            for child in groupbys:
-                yield from child(collected_values)
+        collected_values = []
+        for output in transform_outputs:
+            # use try/except as quick hack for checking if output is iterable
+            try:
+                # do this for transforms
+                # for o in output:
+                #     collected_values.append(o)
+                # do this for groupby
+                collected_values.append(next(output))
+            except:
+                collected_values.append(output)
 
-        for transform_output in transform_outputs:
-            if self.is_iterator(transform_output):
-                for output_item in transform_output:
-                    yield from self.iterate_children(output_item, transforms)
-            else:
-                yield from self.iterate_children(transform_output, transforms)
+        if len(self.children) > 0:
+            for child in self.children:
+                yield from child(collected_values)
+        else:
+            for value in collected_values:
+                yield value
+            # yield from iter((transform_outputs,))
+                # yield nextx
+
+        # if len(groupbys) > 0:
+        #     collected_values = []
+        #     for output in transform_outputs:
+        #         # use try/except as quick hack for checking if output is iterable
+        #         try:
+        #             collected_values.append(next(output))
+        #         except:
+        #             collected_values.append(output)
+        #     for child in groupbys:
+        #         yield from child(collected_values)
+        #
+        # for transform_output in transform_outputs:
+        #     if self.is_iterator(transform_output):
+        #         for output_item in transform_output:
+        #             yield from self.iterate_children(output_item, transforms)
+        #     else:
+        #         yield from self.iterate_children(transform_output, transforms)
 
     def iterate_children(self, transform_output, children):
         if len(children) > 0:
@@ -59,6 +80,7 @@ class Transform:
 
     def expand(self, input_or_inputs):
         raise NotImplementedError
+
 
 class Create(Transform):
     def __init__(self, input_or_inputs):
@@ -99,5 +121,6 @@ class NamedTransform(Transform):
     def __init__(self):
         super().__init__()
         self.label = "Unknown"
+
     def __rshift__(self, label):
         self.label = label
