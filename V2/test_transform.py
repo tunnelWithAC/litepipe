@@ -1,6 +1,6 @@
 import unittest
 
-from transform import Transform, GroupBy
+from transform import Transform, GroupBy, Create
 from pipeline import Pipeline
 
 
@@ -22,80 +22,86 @@ class YieldMultipleOutputs(Transform):
 
 class MyTestCase(unittest.TestCase):
     def test_single_transform(self):
-        pipe = Pipeline(NoChange())
+        p = Pipeline()
+        p | Create([1]) | Double()
 
-        results = pipe.run([1])
+        results = p.run()
 
-        self.assertEqual([1], results)
+        self.assertEqual([2], results)
 
     def test_yield_multiple_transform(self):
-        pipe = Pipeline(YieldMultipleOutputs())
+        p = Pipeline()
+        p | Create([1]) | YieldMultipleOutputs()
 
-        results = pipe.run([1])
+        results = p.run()
 
         self.assertEqual([1, 1], results)
 
-
     def test_chain_transform(self):
-        y = YieldMultipleOutputs()
-        y >> Double()
-        pipe = Pipeline(y)
+        p = Pipeline()
+        p | Create([1]) | YieldMultipleOutputs() | Double()
 
-        results = pipe.run([1])
+        results = p.run()
 
         self.assertEqual([2, 2], results)
 
     def test_multiple_children_transform(self):
+        p = Pipeline()
         y = YieldMultipleOutputs()
-        y >> Double()
-        y >> Double()
-        pipe = Pipeline(y)
+        y | Double()
+        y | Double()
+        p | Create([1]) | y
 
-        results = pipe.run([1])
+        results = p.run()
 
         self.assertEqual([2, 2, 2, 2], results)
 
     def test_multiple_steps_transform(self):
-        y = YieldMultipleOutputs()
-        y >> Double() >> Double()
-        pipe = Pipeline(y)
+        p = Pipeline()
 
-        results = pipe.run([1])
+        (p
+         | Create([1])
+         | YieldMultipleOutputs()
+         | Double()
+         | Double()
+         )
+
+        results = p.run()
 
         self.assertEqual([4, 4], results)
 
 
     def test_group_by_0(self):
-        start = NoChange()
-        start >> GroupBy()
-        pipe = Pipeline(start)
+        p = Pipeline()
+        (p
+         | Create(["strawberry", "banana", "blueberry"])
+         | NoChange()
+         | GroupBy())
 
-        results = pipe.run(["strawberry", "banana", "blueberry"])
+        results = p.run()
 
         expected = [{'s': ['strawberry'], 'b': ['banana', 'blueberry']}]
-
-        self.assertEqual(results, expected)
+        self.assertEqual(expected, results)
 
 
     def test_group_by_1(self):
-        pipe = Pipeline(GroupBy())
+        p = Pipeline()
+        p | Create(["strawberry", "banana", "blueberry"]) | GroupBy()
 
-        results = pipe.run(["strawberry", "banana", "blueberry"])
+        results = p.run()
 
         expected = [{'s': ['strawberry'], 'b': ['banana', 'blueberry']}]
-
-        self.assertEqual(results, expected)
+        self.assertEqual(expected, results)
 
     def test_group_by_into_transform(self):
-        start = NoChange()
-        start >> GroupBy()
-        pipe = Pipeline(start)
+        p = Pipeline()
+        p | Create(["strawberry", "banana", "blueberry"]) | GroupBy() | NoChange()
 
-        results = pipe.run(["strawberry", "banana", "blueberry"])
+        results = p.run()
 
         expected = [{'s': ['strawberry'], 'b': ['banana', 'blueberry']}]
 
-        self.assertEqual(results, expected)
+        self.assertEqual(expected, results)
 
 
 if __name__ == '__main__':
