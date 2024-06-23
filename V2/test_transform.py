@@ -6,7 +6,7 @@ from pipeline import Pipeline
 
 class NoChange(Transform):
     def expand(self, input):
-        return input
+        yield input
 
 
 class Double(Transform):
@@ -18,6 +18,12 @@ class YieldMultipleOutputs(Transform):
     def expand(self, input):
         yield input
         yield input
+
+
+class GroupCount(Transform):
+    def expand(self, input):
+        # group, values = input
+        yield {"key": input["key"], "length": len(input["values"]), "values": input["values"]}
 
 
 class MyTestCase(unittest.TestCase):
@@ -37,6 +43,13 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual([1, 1], results)
 
+    def test_yield_multiple_dict_transform(self):
+        p = Pipeline()
+        p | Create([{"name": "test"}]) | YieldMultipleOutputs()
+
+        results = p.run()
+
+        self.assertEqual([{"name": "test"}, {"name": "test"}], results)
     def test_chain_transform(self):
         p = Pipeline()
         p | Create([1]) | YieldMultipleOutputs() | Double()
@@ -80,7 +93,7 @@ class MyTestCase(unittest.TestCase):
 
         results = p.run()
 
-        expected = [{'s': ['strawberry'], 'b': ['banana', 'blueberry']}]
+        expected = [{'key': 's', 'values': ['strawberry']}, {'key': 'b', 'values': ['banana', 'blueberry']}]
         self.assertEqual(expected, results)
 
 
@@ -90,16 +103,17 @@ class MyTestCase(unittest.TestCase):
 
         results = p.run()
 
-        expected = [{'s': ['strawberry'], 'b': ['banana', 'blueberry']}]
+        expected = [{'key': 's', 'values': ['strawberry']}, {'key': 'b', 'values': ['banana', 'blueberry']}]
         self.assertEqual(expected, results)
 
     def test_group_by_into_transform(self):
         p = Pipeline()
-        p | Create(["strawberry", "banana", "blueberry"]) | GroupBy() | NoChange()
+        p | Create(["strawberry", "banana", "blueberry"]) | GroupBy() | GroupCount()
 
         results = p.run()
 
-        expected = [{'s': ['strawberry'], 'b': ['banana', 'blueberry']}]
+        expected = [{'key': 's', 'values': ['strawberry'], 'length': 1},
+                    {'key': 'b', 'values': ['banana', 'blueberry'], 'length': 2}]
 
         self.assertEqual(expected, results)
 

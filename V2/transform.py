@@ -23,40 +23,42 @@ class Transform:
             else:
                 transforms.append(child)
 
-        transform_outputs = map(self.expand, input)
+        # transform_outputs = map(self.expand, input)
 
         collected_values = []
-        for output in transform_outputs:
+        group_collected_values = []
+
+        for output in map(self.expand, input):
             # use try/except as quick hack for checking if output is iterable
             try:
                 # do this for transforms
-                # for o in output:
-                #     collected_values.append(o)
-                # do this for groupby
-                collected_values.append(next(output))
+                for o in output:
+                    collected_values.append(o)
             except:
                 collected_values.append(output)
 
-        if len(self.children) > 0:
-            for child in self.children:
+        if len(transforms) > 0:
+            for child in transforms:
                 yield from child(collected_values)
-        else:
-            for value in collected_values:
-                yield value
+
             # yield from iter((transform_outputs,))
                 # yield nextx
-
-        # if len(groupbys) > 0:
-        #     collected_values = []
-        #     for output in transform_outputs:
-        #         # use try/except as quick hack for checking if output is iterable
-        #         try:
-        #             collected_values.append(next(output))
-        #         except:
-        #             collected_values.append(output)
-        #     for child in groupbys:
-        #         yield from child(collected_values)
-        #
+        elif len(groupbys) > 0:
+            for output in map(self.expand, input):
+                # use try/except as quick hack for checking if output is iterable
+                try:
+                    group_collected_values.append(next(output))
+                except:
+                    group_collected_values.append(output)
+            for child in groupbys:
+                yield from child(group_collected_values)
+        else:
+            if isinstance(self, GroupBy):
+                yield collected_values
+            else:
+                for value in collected_values:
+                    yield value
+            #
         # for transform_output in transform_outputs:
         #     if self.is_iterator(transform_output):
         #         for output_item in transform_output:
@@ -67,7 +69,7 @@ class Transform:
     def iterate_children(self, transform_output, children):
         if len(children) > 0:
             for child in children:
-                yield from child(iter((transform_output,)))
+                yield from child(transform_output)
         else:
             yield transform_output
     @staticmethod
@@ -103,14 +105,17 @@ class GroupBy(Transform):
         return parent.iterate_children(transform_output, children)
 
     def __call__(self, input):
-        groups = {}
-        for key, group in groupby(input, self.get_key()):
-            if key not in groups.keys():
-                groups[key] = []
-            for g in group:
-                groups[key].append(g)
+        # groups = {}
+        # for key, group in groupby(input, self.get_key()):
+        #     if key not in groups.keys():
+        #         groups[key] = []
+        #     for g in group:
+        #         groups[key].append(g)
 
-        yield from self.iterate_children(groups, self.children)
+        for key, group in groupby(input, self.get_key()):
+            values = [item for item in group]
+            # grouped_tuple = (key, values)
+            yield from self.iterate_children([{"key": key, "values": values}], self.children)
 
     @staticmethod
     def get_key():
