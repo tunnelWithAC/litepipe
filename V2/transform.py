@@ -41,8 +41,6 @@ class Transform:
             for child in transforms:
                 yield from child(collected_values)
 
-            # yield from iter((transform_outputs,))
-                # yield nextx
         elif len(groupbys) > 0:
             for output in map(self.expand, input):
                 # use try/except as quick hack for checking if output is iterable
@@ -114,8 +112,8 @@ class GroupBy(Transform):
 
         for key, group in groupby(input, self.get_key()):
             values = [item for item in group]
-            # grouped_tuple = (key, values)
-            yield from self.iterate_children([{"key": key, "values": values}], self.children)
+            output = {"key": key, "values": values}
+            yield from self.iterate_children([output], self.children)
 
     @staticmethod
     def get_key():

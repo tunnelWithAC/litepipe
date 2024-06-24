@@ -22,11 +22,12 @@ class YieldMultipleOutputs(Transform):
 
 class GroupCount(Transform):
     def expand(self, input):
-        # group, values = input
-        yield {"key": input["key"], "length": len(input["values"]), "values": input["values"]}
+        values = input["values"]
+        key = input["key"]
+        yield {"key": key, "length": len(values), "values": values}
 
 
-class MyTestCase(unittest.TestCase):
+class TransformTestCase(unittest.TestCase):
     def test_single_transform(self):
         p = Pipeline()
         p | Create([1]) | Double()
@@ -83,8 +84,17 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual([4, 4], results)
 
+    def test_groupby(self):
+        p = Pipeline()
+        p | Create(["strawberry", "banana", "blueberry"]) | GroupBy()
 
-    def test_group_by_0(self):
+        results = p.run()
+
+        expected = [[{'key': 's', 'values': ['strawberry']}],
+                    [{'key': 'b', 'values': ['banana', 'blueberry']}]]
+        self.assertEqual(expected, results)
+
+    def test_groupby_following_transform(self):
         p = Pipeline()
         (p
          | Create(["strawberry", "banana", "blueberry"])
@@ -93,17 +103,8 @@ class MyTestCase(unittest.TestCase):
 
         results = p.run()
 
-        expected = [{'key': 's', 'values': ['strawberry']}, {'key': 'b', 'values': ['banana', 'blueberry']}]
-        self.assertEqual(expected, results)
-
-
-    def test_group_by_1(self):
-        p = Pipeline()
-        p | Create(["strawberry", "banana", "blueberry"]) | GroupBy()
-
-        results = p.run()
-
-        expected = [{'key': 's', 'values': ['strawberry']}, {'key': 'b', 'values': ['banana', 'blueberry']}]
+        expected = [[{'key': 's', 'values': ['strawberry']}],
+                    [{'key': 'b', 'values': ['banana', 'blueberry']}]]
         self.assertEqual(expected, results)
 
     def test_group_by_into_transform(self):
