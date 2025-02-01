@@ -4,24 +4,18 @@ from itertools import groupby
 class Transform:
     def __init__(self):
         self.children = []
+        self.label = self.__class__.__name__
 
-    def __rshift__(self, other):
-        self.children.append(other)
-        return other
+    def __rshift__(self, label):
+        self.label = label
+        return self
 
     def __or__(self, other):
         self.children.append(other)
         return other
 
-    def __call__(self, input):
-        groupbys = []
-        transforms = []
-        # inputs are processed differently based on regular transform (per input) vs groupby
-        for child in self.children:
-            if isinstance(child, GroupBy) or issubclass(type(child), GroupBy):
-                groupbys.append(child)
-            else:
-                transforms.append(child)
+    def __call__(self, input=None):
+        assert input is not None, 'input must not be None'
 
         collected_values = []
         for output in map(self.expand, input):
@@ -32,20 +26,10 @@ class Transform:
                     collected_values.append(o)
             except:
                 collected_values.append(output)
-        if len(transforms) > 0:
-            for child in transforms:
+
+        if len(self.children) > 0:
+            for child in self.children:
                 yield from child(collected_values)
-        elif len(groupbys) > 0:
-            # groupby values need to be collected using next rather than a for loop
-            group_collected_values = []
-            for output in map(self.expand, input):
-                # use try/except as quick hack for checking if output is iterable
-                try:
-                    group_collected_values.append(next(output))
-                except:
-                    group_collected_values.append(output)
-            for child in groupbys:
-                yield from child(group_collected_values)
         else:
             if isinstance(self, GroupBy):
                 yield collected_values
@@ -56,6 +40,11 @@ class Transform:
     def expand(self, input_or_inputs):
         raise NotImplementedError
 
+    def __str__(self):
+        """Serialise the tree recursively as parent -> (children)."""
+        childstring = ", ".join(map(str, self.children))
+        return f"{self.label!s} -> ({childstring})"  # what does '!s' mean?
+
 
 class Create(Transform):
     def __init__(self, input_or_inputs):
@@ -65,7 +54,7 @@ class Create(Transform):
     def expand(self, input_or_inputs):
         yield input_or_inputs
 
-    def __call__(self, _):
+    def __call__(self):
         yield from super().__call__(self.input_or_inputs)
 
 

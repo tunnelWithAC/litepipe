@@ -40,9 +40,9 @@ class Transform:
     def expand(self, input_or_inputs):
         raise NotImplementedError
 
-    def generate_graph(self):
+    def __str__(self):
         """Serialise the tree recursively as parent -> (children)."""
-        childstring = ", ".join(map(lambda child: child.generate_graph(), self.children))
+        childstring = ", ".join(map(str, self.children))
         return f"{self.label!s} -> ({childstring})"
 
 
@@ -62,8 +62,9 @@ class GroupBy(Transform):
     def __init__(self):
         super().__init__()
 
-    def __call__(self, input_or_inputs):
-        for key, group in groupby(input_or_inputs, self.get_key()):
+    def __call__(self, input):
+
+        for key, group in groupby(input, self.get_key()):
             values = [item for item in group]
             transform_output = [{"key": key, "values": values}]
 

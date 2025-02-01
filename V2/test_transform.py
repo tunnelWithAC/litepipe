@@ -27,6 +27,12 @@ class GroupCount(Transform):
         yield {"key": key, "length": len(values), "values": values}
 
 
+class Filter(Transform):
+    def expand(self, input):
+        if input > 10:
+            yield input
+
+
 class TransformTestCase(unittest.TestCase):
     def test_single_transform(self):
         p = Pipeline()
@@ -35,6 +41,25 @@ class TransformTestCase(unittest.TestCase):
         results = p.run()
 
         self.assertEqual([2], results)
+
+    def test_filter(self):
+        p = Pipeline()
+        p | Create([1, 2, 3, 6, 9, 15, 24]) | Filter()
+
+        results = p.run()
+
+        self.assertEqual([15, 24], results)
+
+    def test_multiple_branches(self):
+        p = Pipeline()
+        filtered_items = p | Create([1, 2, 3, 6, 9, 15, 24]) | Filter()
+
+        filtered_items | YieldMultipleOutputs()
+        filtered_items | Double()
+
+        results = p.run()
+
+        self.assertEqual([15, 15, 24, 24, 30, 48], results)
 
     def test_yield_multiple_transform(self):
         p = Pipeline()
@@ -51,6 +76,7 @@ class TransformTestCase(unittest.TestCase):
         results = p.run()
 
         self.assertEqual([{"name": "test"}, {"name": "test"}], results)
+
     def test_chain_transform(self):
         p = Pipeline()
         p | Create([1]) | YieldMultipleOutputs() | Double()
@@ -75,14 +101,13 @@ class TransformTestCase(unittest.TestCase):
 
         (p
          | Create([1])
-         | YieldMultipleOutputs()
          | Double()
          | Double()
          )
 
         results = p.run()
 
-        self.assertEqual([4, 4], results)
+        self.assertEqual([4], results)
 
     def test_groupby(self):
         p = Pipeline()
@@ -98,8 +123,8 @@ class TransformTestCase(unittest.TestCase):
         p = Pipeline()
         (p
          | Create(["strawberry", "banana", "blueberry"])
-         | NoChange()
-         | GroupBy())
+         | NoChange() >> 'DoNothing'
+         | GroupBy() >> 'GroupBy')
 
         results = p.run()
 
@@ -117,6 +142,17 @@ class TransformTestCase(unittest.TestCase):
                     {'key': 'b', 'values': ['banana', 'blueberry'], 'length': 2}]
 
         self.assertEqual(expected, results)
+
+    def test_print_graph(self):
+        p = Pipeline()
+        (p
+         | Create(["strawberry", "banana", "blueberry"])
+         | NoChange() >> 'DoNothing'
+         | GroupBy() >> 'GroupBy')
+
+        g = p.graph
+
+        self.assertEqual('Create -> (DoNothing -> (GroupBy -> ()))', g)
 
 
 if __name__ == '__main__':
