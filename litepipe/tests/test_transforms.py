@@ -2,35 +2,7 @@ import unittest
 
 from litepipe.transform import Transform, GroupBy, Create
 from litepipe.pipeline import Pipeline
-
-
-class NoChange(Transform):
-    def expand(self, input):
-        yield input
-
-
-class Double(Transform):
-    def expand(self, input):
-        yield input * 2
-
-
-class YieldMultipleOutputs(Transform):
-    def expand(self, input):
-        yield input
-        yield input
-
-
-class GroupCount(Transform):
-    def expand(self, input):
-        values = input["values"]
-        key = input["key"]
-        yield {"key": key, "length": len(values), "values": values}
-
-
-class Filter(Transform):
-    def expand(self, input):
-        if input > 10:
-            yield input
+from litepipe.examples.transforms import NoChange, Double, YieldMultipleOutputs, GroupCount, Filter
 
 
 class TransformTestCase(unittest.TestCase):
@@ -41,6 +13,23 @@ class TransformTestCase(unittest.TestCase):
         results = p.run()
 
         self.assertEqual([2], results)
+
+    def test_transform_custom_init(self):
+        class CustomInit(Transform):
+            def __init__(self):
+                super().__init__()
+                self.multiplier = 2
+
+            def expand(self, input):
+                yield input * self.multiplier
+
+        p = Pipeline()
+        p | Create([1]) | CustomInit()
+
+        results = p.run()
+
+        self.assertEqual([2], results)
+
 
     def test_filter(self):
         p = Pipeline()
@@ -143,16 +132,14 @@ class TransformTestCase(unittest.TestCase):
 
         self.assertEqual(expected, results)
 
-    def test_print_graph(self):
+    def test_pipeline_graph(self):
         p = Pipeline()
         (p
          | Create(["strawberry", "banana", "blueberry"])
          | NoChange() >> 'DoNothing'
          | GroupBy() >> 'GroupBy')
 
-        g = p.print_graph()
-
-        self.assertEqual('Create -> (DoNothing -> (GroupBy -> ()))', g)
+        self.assertEqual('Create -> (DoNothing -> (GroupBy -> ()))', p.graph)
 
 
 if __name__ == '__main__':

@@ -5,6 +5,7 @@ class NoChange(Transform):
     def expand(self, input):
         yield input
 
+
 class Double(Transform):
     def expand(self, input):
         yield input * 2
