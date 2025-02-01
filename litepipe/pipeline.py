@@ -17,4 +17,4 @@ class Pipeline:
 
     @property
     def graph(self):
-        return self.start.generate_graph()
+        return str(self.start)
