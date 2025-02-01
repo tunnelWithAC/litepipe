@@ -1,55 +1,78 @@
-from typing import Callable
+from itertools import groupby
 
 
 class Transform:
-    def __init__(self, fn: Callable):
-        """
-        :param fn (Callable): A Python function that should be called when the transform is executed as part of a
-            pipeline.
-        :param steps (List[Callable]): A list of Python functions that are chained together whenever Transforms are
-            chained using the rshift (>>) operator.
-        """
-        # if steps is not None:
-        #     self.steps = steps
-        # else:
-        #     self.steps = [fn]
-        self.steps = []
-        self.fn = fn
+    def __init__(self):
+        self.children = []
+        self.label = self.__class__.__name__
 
-    def __rshift__(self, transform):
-        self.steps.append(transform.fn)
-        # return type(self)(self.fn, self.steps)
-        return transform
+    def __rshift__(self, label):
+        self.label = label
+        return self
 
-    def __call__(self, input):
-        for _inp in input:
-            transform_output = self.fn(_inp)
-            if len(self.steps) > 0:
-                for child in self.steps:
-                    yield from child(iter((transform_output,)))
+    def __or__(self, other):
+        self.children.append(other)
+        return other
+
+    def __call__(self, input=None):
+        assert input is not None, 'input must not be None'
+
+        collected_values = []
+        for output in map(self.expand, input):
+            # use try/except as quick hack for checking if output is iterable
+            try:
+                # do this for transforms
+                for o in output:
+                    collected_values.append(o)
+            except:
+                collected_values.append(output)
+
+        if len(self.children) > 0:
+            for child in self.children:
+                yield from child(collected_values)
+        else:
+            if isinstance(self, GroupBy):
+                yield collected_values
+            else:
+                for value in collected_values:
+                    yield value
+
+    def expand(self, input_or_inputs):
+        raise NotImplementedError
+
+    def generate_graph(self):
+        """Serialise the tree recursively as parent -> (children)."""
+        childstring = ", ".join(map(lambda child: child.generate_graph(), self.children))
+        return f"{self.label!s} -> ({childstring})"
+
+
+class Create(Transform):
+    def __init__(self, input_or_inputs):
+        super().__init__()
+        self.input_or_inputs = input_or_inputs
+
+    def expand(self, input_or_inputs):
+        yield input_or_inputs
+
+    def __call__(self):
+        yield from super().__call__(self.input_or_inputs)
+
+
+class GroupBy(Transform):
+    def __init__(self):
+        super().__init__()
+
+    def __call__(self, input_or_inputs):
+        for key, group in groupby(input_or_inputs, self.get_key()):
+            values = [item for item in group]
+            transform_output = [{"key": key, "values": values}]
+
+            if len(self.children) > 0:
+                for child in self.children:
+                    yield from child(transform_output)
             else:
                 yield transform_output
 
-# class Filter:
-#     def __init__(self, fn: Callable, steps: List[Callable] = None):
-#         """
-#         :param fn (Callable): A Python function that should be called when the transform is executed as part of a
-#             pipeline.
-#         :param steps (List[Callable]): A list of Python functions that are chained together whenever Transforms are
-#             chained using the rshift (>>) operator.
-#         """
-#         if steps is not None:
-#             self.steps = steps
-#         else:
-#             self.steps = [fn]
-#         self.fn = fn
-#
-#     def __rshift__(self, transform):
-#         # self.steps[:-1].steps.append(transform.fn)
-#         self.steps.append(transform.fn)
-#         # return type(self)(self.fn, self.steps)
-#         return transform
-
-
-def t(x) -> Transform:
-    return Transform(x)
+    @staticmethod
+    def get_key():
+        return lambda x: x[0]
