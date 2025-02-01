@@ -1,11 +1,10 @@
-# todo import Transform
-
+from litepipe import Transform
 
 class Pipeline:
     def __init__(self):
         self.start = None
 
-    def __or__(self, start):
+    def __or__(self, start: Transform):
         self.start = start
         return start
 
