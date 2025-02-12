@@ -2,7 +2,7 @@ name: publish-to-pypi
 on:
   push:
     tags: [ 'publish-pypi-*' ]
-    branches: [ 'feature/pypi*' ]
+    branches: [ 'feature/pypi*', 'release/pypi*' ]
 jobs:
   build-and-publish:
     name: Build and publish package to PyPI and TestPyPI
